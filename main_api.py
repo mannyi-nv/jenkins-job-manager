@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Query
-from services.job_service import get_all_jobs, create_job, delete_job, update_job
+from services.job_service import get_all_jobs, create_job, delete_job, update_job, sync_jobs
 from fastapi.staticfiles import StaticFiles
 
 # Map target keyword to filename used by data layer
@@ -48,6 +48,10 @@ def edit_job(job_id: int, job: dict, target: str | None = Query(None, descriptio
         schedule=job.get("schedule"),
         filename=filename
     )
+
+@app.post("/sync-dev-to-prod")
+def sync_dev_to_prod():
+    return sync_jobs(source_filename="dummy_jobs.json", target_filename=None)
 
 # 2. MOUNT STATIC FILES AT THE VERY BOTTOM
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

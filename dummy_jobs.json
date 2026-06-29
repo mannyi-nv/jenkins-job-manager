@@ -1,1 +1,22 @@
-[]
+[
+    {
+        "job_name": "a",
+        "owner": "Eitan",
+        "description": "a",
+        "created_by": "svc-rnd-dev",
+        "last_modify": "6/29/2026, 6:32:02 PM",
+        "last_run": "",
+        "schedule": "Manual",
+        "status": "PENDING"
+    },
+    {
+        "job_name": "lab-support",
+        "owner": "Itay",
+        "description": "web UI support",
+        "created_by": "svc-lab-support",
+        "last_modify": "6/29/2026, 6:43:23 PM",
+        "last_run": "",
+        "schedule": "Daily",
+        "status": "PENDING"
+    }
+]

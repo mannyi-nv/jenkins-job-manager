@@ -80,3 +80,13 @@ def update_job(index: int, job_name: str = None, owner: str = None, description:
     return job
 
 
+def sync_jobs(source_filename: str = "dummy_jobs.json", target_filename: str = None):
+    source_jobs = load_jobs(source_filename)
+    save_jobs(source_jobs, target_filename)
+    return {
+        "synced": len(source_jobs),
+        "source": source_filename,
+        "target": target_filename or "production-default"
+    }
+
+

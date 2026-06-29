@@ -269,12 +269,12 @@
     <h2>Operations Center</h2>
     <div class="sidebar-menu">
         <div id="menu-about" class="active" onclick="switchTab('about')">About System</div>
-        <div id="menu-dashboard" onclick="switchTab('dashboard')">Metrics Dashboard</div>
-        <div id="menu-jobs" onclick="switchTab('jobs')">Manage Pipelines</div>
+        <div id="menu-prod-metrics" onclick="switchTab('prodMetrics')">Metrics Production Dashboard</div>
+        <div id="menu-prod-jobs" onclick="switchTab('prodJobs')">Manage Production Pipelines</div>
+        <div id="menu-dev-metrics" onclick="switchTab('devMetrics')">Metrics Develop Dashboard</div>
+        <div id="menu-dev-jobs" onclick="switchTab('devJobs')">Manage Develop Pipelines</div>
     </div>
 </div>
-
-<div class="main">
 
     <!-- 💡 Section 1: About Portfolio Page -->
     <section id="aboutSection">
@@ -296,28 +296,47 @@
         </div>
     </section>
 
-    <!-- 📊 Section 2: Metrics Dashboard Panel -->
-    <section id="dashboardSection" style="display: none;">
-        <h1>System Telemetry</h1>
+    <!-- 📊 Section 2: Production Metrics Dashboard -->
+    <section id="prodMetricsSection" style="display: none;">
+        <h1>Production System Telemetry</h1>
         <div class="metrics-row">
             <div class="metric-card">
-                <span class="metric-title">Registered Pipelines</span>
+                <span class="metric-title">Registered Production Pipelines</span>
                 <span class="metric-value cyan" id="metric-total-count">0</span>
             </div>
             <div class="metric-card">
-                <span class="metric-title">Last Structural Modification</span>
+                <span class="metric-title">Last Production Modification</span>
                 <span class="metric-value" id="metric-last-modify" style="font-size: 14px; font-family: monospace; color: #fbbf24;">No edits tracked</span>
             </div>
             <div class="metric-card">
-                <span class="metric-title">Last Execution Sequence State</span>
+                <span class="metric-title">Last Production Execution</span>
                 <span class="metric-value" id="metric-last-run" style="font-size: 14px; font-family: monospace; color: #a855f7;">No executions initialized</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 📊 Section 3: Develop Metrics Dashboard -->
+    <section id="devMetricsSection" style="display: none;">
+        <h1>Develop System Telemetry</h1>
+        <div class="metrics-row">
+            <div class="metric-card">
+                <span class="metric-title">Registered Develop Pipelines</span>
+                <span class="metric-value cyan" id="metric-total-count-dev">0</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-title">Last Develop Modification</span>
+                <span class="metric-value" id="metric-last-modify-dev" style="font-size: 14px; font-family: monospace; color: #fbbf24;">No edits tracked</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-title">Last Develop Execution</span>
+                <span class="metric-value" id="metric-last-run-dev" style="font-size: 14px; font-family: monospace; color: #a855f7;">No executions initialized</span>
             </div>
         </div>
     </section>
 
     <!-- 🛠️ Section 3: Pipelines Management Grid Module -->
     <section id="jobsSection" style="display: none;">
-        <h1>Jenkins Jobs Manager</h1>
+        <h1 id="jobsHeading">Jenkins Jobs Manager</h1>
         
         <div class="section-card">
             <h3 class="section-title">✨ Provision New Automation Pipeline</h3>
@@ -335,6 +354,12 @@
 
                 <button type="submit">Deploy Job</button>
             </form>
+            <div id="syncButtonWrapper" style="margin-top: 16px; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                <span style="color: var(--text-secondary); font-size: 13px;">Use the sidebar to switch between Production and Develop workflows.</span>
+                <button type="button" id="syncButton" onclick="syncDevToProd()" style="padding: 12px 18px; background-color: #0f172a; border: 1px solid var(--border-color); color: var(--accent-green); border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    ⬆️ Sync Develop → Production
+                </button>
+            </div>
         </div>
 
         <div class="table-container">
@@ -360,28 +385,73 @@
         <script>
 let allJobsCached = [];
 
+let currentTarget = 'production';
+
 function switchTab(targetSection) {
     const about = document.getElementById("aboutSection");
-    const dash = document.getElementById("dashboardSection");
+    const prodMetrics = document.getElementById("prodMetricsSection");
+    const devMetrics = document.getElementById("devMetricsSection");
     const jobs = document.getElementById("jobsSection");
+    const syncWrapper = document.getElementById("syncButtonWrapper");
+    const sectionTitle = document.getElementById("jobsHeading");
 
     if(about) about.style.display = "none";
-    if(dash) dash.style.display = "none";
+    if(prodMetrics) prodMetrics.style.display = "none";
+    if(devMetrics) devMetrics.style.display = "none";
     if(jobs) jobs.style.display = "none";
+    if(syncWrapper) syncWrapper.style.display = "none";
 
-    document.getElementById("menu-about").classList.remove("active");
-    document.getElementById("menu-dashboard").classList.remove("active");
-    document.getElementById("menu-jobs").classList.remove("active");
+    [
+        "menu-about",
+        "menu-prod-metrics",
+        "menu-prod-jobs",
+        "menu-dev-metrics",
+        "menu-dev-jobs"
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.classList.remove("active");
+    });
 
     if (targetSection === 'about' && about) {
         about.style.display = "block";
         document.getElementById("menu-about").classList.add("active");
-    } else if (targetSection === 'dashboard' && dash) {
-        dash.style.display = "block";
-        document.getElementById("menu-dashboard").classList.add("active");
-    } else if (targetSection === 'jobs' && jobs) {
+        return;
+    }
+
+    if (targetSection === 'prodMetrics' && prodMetrics) {
+        currentTarget = 'production';
+        prodMetrics.style.display = "block";
+        document.getElementById("menu-prod-metrics").classList.add("active");
+        loadJobs();
+        return;
+    }
+
+    if (targetSection === 'devMetrics' && devMetrics) {
+        currentTarget = 'dev';
+        devMetrics.style.display = "block";
+        document.getElementById("menu-dev-metrics").classList.add("active");
+        loadJobs();
+        return;
+    }
+
+    if (targetSection === 'prodJobs' && jobs) {
+        currentTarget = 'production';
         jobs.style.display = "block";
-        document.getElementById("menu-jobs").classList.add("active");
+        if(sectionTitle) sectionTitle.innerText = 'Production Pipeline Manager';
+        if(syncWrapper) syncWrapper.style.display = "none";
+        document.getElementById("menu-prod-jobs").classList.add("active");
+        loadJobs();
+        return;
+    }
+
+    if (targetSection === 'devJobs' && jobs) {
+        currentTarget = 'dev';
+        jobs.style.display = "block";
+        if(sectionTitle) sectionTitle.innerText = 'Develop Pipeline Manager';
+        if(syncWrapper) syncWrapper.style.display = "flex";
+        document.getElementById("menu-dev-jobs").classList.add("active");
+        loadJobs();
+        return;
     }
 }
 
@@ -393,12 +463,17 @@ function getStatus() { return "SUCCESS"; }
 
 async function loadJobs() {
     try {
-        const res = await fetch("/jobs");
+        const res = await fetch(`/jobs${getTargetQuery()}`);
         const data = await res.json();
         allJobsCached = data; 
         
-        const countBox = document.getElementById("metric-total-count");
-        if(countBox) countBox.innerText = Array.isArray(data) ? data.length : 0;
+        if (currentTarget === 'production') {
+            const countBox = document.getElementById("metric-total-count");
+            if(countBox) countBox.innerText = Array.isArray(data) ? data.length : 0;
+        } else {
+            const countBoxDev = document.getElementById("metric-total-count-dev");
+            if(countBoxDev) countBoxDev.innerText = Array.isArray(data) ? data.length : 0;
+        }
         
         const table = document.getElementById("jobsTable");
         if(!table) return;
@@ -410,11 +485,20 @@ async function loadJobs() {
             return;
         }
         data.forEach((job, index) => {
-            if (job.last_modify && document.getElementById("metric-last-modify")) {
-                document.getElementById("metric-last-modify").innerText = job.last_modify;
-            }
-            if (job.last_run && document.getElementById("metric-last-run")) {
-                document.getElementById("metric-last-run").innerText = job.last_run;
+                    if (currentTarget === 'production') {
+                if (job.last_modify && document.getElementById("metric-last-modify")) {
+                    document.getElementById("metric-last-modify").innerText = job.last_modify;
+                }
+                if (job.last_run && document.getElementById("metric-last-run")) {
+                    document.getElementById("metric-last-run").innerText = job.last_run;
+                }
+            } else {
+                if (job.last_modify && document.getElementById("metric-last-modify-dev")) {
+                    document.getElementById("metric-last-modify-dev").innerText = job.last_modify;
+                }
+                if (job.last_run && document.getElementById("metric-last-run-dev")) {
+                    document.getElementById("metric-last-run-dev").innerText = job.last_run;
+                }
             }
 
             table.innerHTML += `
@@ -447,6 +531,14 @@ async function loadJobs() {
     } catch (err) { console.error("Fetch failure:", err); }
 }
 
+function getTargetQuery() {
+    return currentTarget === "dev" ? "?target=dev" : "?target=production";
+}
+
+function getTargetValue() {
+    return currentTarget;
+}
+
 function toggleConsole(index) {
     const logRow = document.getElementById(`logs-row-${index}`);
     const consoleBox = document.getElementById(`console-box-${index}`);
@@ -462,12 +554,16 @@ function toggleConsole(index) {
     consoleBox.innerHTML = ""; 
 
     const currentTime = new Date().toLocaleString();
-    if(document.getElementById("metric-last-run")) {
-        document.getElementById("metric-last-run").innerText = currentTime;
+    if (currentTarget === 'production') {
+        if(document.getElementById("metric-last-run")) {
+            document.getElementById("metric-last-run").innerText = currentTime;
+        }
+    } else {
+        if(document.getElementById("metric-last-run-dev")) {
+            document.getElementById("metric-last-run-dev").innerText = currentTime;
+        }
     }
-    const target = prompt("Record last run to 'dev' or 'production'? Enter dev or production:", "dev");
-    const filenameTarget = target === 'dev' ? 'dev' : (target === 'production' ? 'production' : null);
-    saveTimestampUpdate(index, "last_run", currentTime, filenameTarget);
+    saveTimestampUpdate(index, "last_run", currentTime);
 
     const mockLogs = [
         { text: `Validating environment paths for: ${job.job_name}...`, style: "log-info" },
@@ -529,14 +625,17 @@ async function saveJobEdit(index) {
         last_modify: currentTime
     };
 
-    if(document.getElementById("metric-last-modify")) {
-        document.getElementById("metric-last-modify").innerText = currentTime;
+    if (currentTarget === 'production') {
+        if (document.getElementById("metric-last-modify")) {
+            document.getElementById("metric-last-modify").innerText = currentTime;
+        }
+    } else {
+        if (document.getElementById("metric-last-modify-dev")) {
+            document.getElementById("metric-last-modify-dev").innerText = currentTime;
+        }
     }
 
-    const target = prompt("Save to 'dev' (dummy) or 'production'? Enter dev or production:", "dev");
-    const targetQuery = target === 'dev' ? '?target=dev' : (target === 'production' ? '?target=production' : '');
-
-    await fetch(`/jobs/${index}${targetQuery}`, {
+    await fetch(`/jobs/${index}${getTargetQuery()}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedJob)
@@ -544,7 +643,7 @@ async function saveJobEdit(index) {
     loadJobs();
 }
 
-async function saveTimestampUpdate(index, field, value, target) {
+async function saveTimestampUpdate(index, field, value) {
     // 1. Fetch the absolute freshest, live properties out of the array cache
     const currentLiveJob = allJobsCached[index];
     
@@ -554,8 +653,7 @@ async function saveTimestampUpdate(index, field, value, target) {
     // 3. Inject the specific timestamp field update cleanly
     updatedJob[field] = value;
     
-    const targetQuery = target === 'dev' ? '?target=dev' : (target === 'production' ? '?target=production' : '');
-    await fetch(`/jobs/${index}${targetQuery}`, {
+    await fetch(`/jobs/${index}${getTargetQuery()}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedJob)
@@ -563,6 +661,21 @@ async function saveTimestampUpdate(index, field, value, target) {
     
     // 4. Update the global array cache immediately to prevent cross-over overwrites
     allJobsCached[index] = updatedJob; 
+}
+
+async function syncDevToProd() {
+    const response = await fetch('/sync-dev-to-prod', { method: 'POST' });
+    if (!response.ok) {
+        const errorText = await response.text();
+        alert(`Sync failed: ${errorText}`);
+        return;
+    }
+
+    const result = await response.json();
+    alert(`Synced ${result.synced} develop job(s) to production.`);
+    if (currentTarget === 'production') {
+        loadJobs();
+    }
 }
 
 async function addJob(event) {
@@ -578,15 +691,17 @@ async function addJob(event) {
         last_modify: currentTime
     };
 
-    if(document.getElementById("metric-last-modify")) {
-        document.getElementById("metric-last-modify").innerText = currentTime;
+    if (currentTarget === 'production') {
+        if(document.getElementById("metric-last-modify")) {
+            document.getElementById("metric-last-modify").innerText = currentTime;
+        }
+    } else {
+        if(document.getElementById("metric-last-modify-dev")) {
+            document.getElementById("metric-last-modify-dev").innerText = currentTime;
+        }
     }
 
-    // Ask user where to save: dev (workspace) or production
-    const target = prompt("Save to 'dev' (dummy) or 'production'? Enter dev or production:", "dev");
-    const targetQuery = target === 'dev' ? '?target=dev' : (target === 'production' ? '?target=production' : '');
-
-    await fetch(`/jobs${targetQuery}`, {
+    await fetch(`/jobs${getTargetQuery()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(job)
@@ -598,10 +713,7 @@ async function addJob(event) {
 
 async function deleteJob(id) {
     if (confirm("Terminate pipeline profile?")) {
-        const target = prompt("Delete from 'dev' (dummy) or 'production'? Enter dev or production:", "dev");
-        const targetQuery = target === 'dev' ? '?target=dev' : (target === 'production' ? '?target=production' : '');
-
-        await fetch(`/jobs/${id}${targetQuery}`, { method: "DELETE" });
+        await fetch(`/jobs/${id}${getTargetQuery()}`, { method: "DELETE" });
         loadJobs();
     }
 }
