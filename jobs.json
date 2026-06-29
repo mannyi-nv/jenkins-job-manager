@@ -1,0 +1,63 @@
+[
+    {
+        "job_number": 2,
+        "job_name": "qa-regression",
+        "owner": "shuki",
+        "description": "daily",
+        "path": "/jenkins_home/jobs/moshe",
+        "created_by": "admin",
+        "last_modify": "6/4/2026, 7:45:31 PM",
+        "schedule": "Daily",
+        "last_run": "6/10/2026, 11:23:14 PM"
+    },
+    {
+        "job_name": "E2E-Test",
+        "owner": "Manny",
+        "description": "weekly",
+        "created_by": "admin",
+        "last_modify": "6/4/2026, 7:45:43 PM",
+        "schedule": "Weekly"
+    },
+    {
+        "job_name": "DevOps Tasks",
+        "owner": "Manny",
+        "description": "Convert Python CLI to Web"
+    },
+    {
+        "job_name": "R&D",
+        "owner": "Manny",
+        "description": "weekly BK",
+        "created_by": "svc-rnd-dev",
+        "last_modify": "6/4/2026, 5:55:35 PM",
+        "last_run": "",
+        "status": "PENDING"
+    },
+    {
+        "job_name": "lab-support",
+        "owner": "Eitan",
+        "description": "Cluster monitoring",
+        "created_by": "svc-lab-support",
+        "last_modify": "6/4/2026, 6:33:31 PM",
+        "last_run": "",
+        "status": "PENDING"
+    },
+    {
+        "job_name": "network test",
+        "owner": "MI",
+        "description": "test ping",
+        "created_by": "EA",
+        "last_modify": "6/4/2026, 6:59:43 PM",
+        "last_run": "",
+        "status": "PENDING"
+    },
+    {
+        "job_name": "R&D",
+        "owner": "Manny",
+        "description": "Cluster monitoring",
+        "created_by": "svc-rnd-admin",
+        "last_modify": "6/15/2026, 11:05:01 AM",
+        "last_run": "",
+        "schedule": "Daily",
+        "status": "PENDING"
+    }
+]
