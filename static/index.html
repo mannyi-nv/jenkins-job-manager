@@ -465,7 +465,9 @@ function toggleConsole(index) {
     if(document.getElementById("metric-last-run")) {
         document.getElementById("metric-last-run").innerText = currentTime;
     }
-    saveTimestampUpdate(index, "last_run", currentTime);
+    const target = prompt("Record last run to 'dev' or 'production'? Enter dev or production:", "dev");
+    const filenameTarget = target === 'dev' ? 'dev' : (target === 'production' ? 'production' : null);
+    saveTimestampUpdate(index, "last_run", currentTime, filenameTarget);
 
     const mockLogs = [
         { text: `Validating environment paths for: ${job.job_name}...`, style: "log-info" },
@@ -531,7 +533,10 @@ async function saveJobEdit(index) {
         document.getElementById("metric-last-modify").innerText = currentTime;
     }
 
-    await fetch(`/jobs/${index}`, {
+    const target = prompt("Save to 'dev' (dummy) or 'production'? Enter dev or production:", "dev");
+    const targetQuery = target === 'dev' ? '?target=dev' : (target === 'production' ? '?target=production' : '');
+
+    await fetch(`/jobs/${index}${targetQuery}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedJob)
@@ -539,7 +544,7 @@ async function saveJobEdit(index) {
     loadJobs();
 }
 
-async function saveTimestampUpdate(index, field, value) {
+async function saveTimestampUpdate(index, field, value, target) {
     // 1. Fetch the absolute freshest, live properties out of the array cache
     const currentLiveJob = allJobsCached[index];
     
@@ -549,7 +554,8 @@ async function saveTimestampUpdate(index, field, value) {
     // 3. Inject the specific timestamp field update cleanly
     updatedJob[field] = value;
     
-    await fetch(`/jobs/${index}`, {
+    const targetQuery = target === 'dev' ? '?target=dev' : (target === 'production' ? '?target=production' : '');
+    await fetch(`/jobs/${index}${targetQuery}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedJob)
@@ -576,7 +582,11 @@ async function addJob(event) {
         document.getElementById("metric-last-modify").innerText = currentTime;
     }
 
-    await fetch("/jobs", {
+    // Ask user where to save: dev (workspace) or production
+    const target = prompt("Save to 'dev' (dummy) or 'production'? Enter dev or production:", "dev");
+    const targetQuery = target === 'dev' ? '?target=dev' : (target === 'production' ? '?target=production' : '');
+
+    await fetch(`/jobs${targetQuery}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(job)
@@ -588,7 +598,10 @@ async function addJob(event) {
 
 async function deleteJob(id) {
     if (confirm("Terminate pipeline profile?")) {
-        await fetch(`/jobs/${id}`, { method: "DELETE" });
+        const target = prompt("Delete from 'dev' (dummy) or 'production'? Enter dev or production:", "dev");
+        const targetQuery = target === 'dev' ? '?target=dev' : (target === 'production' ? '?target=production' : '');
+
+        await fetch(`/jobs/${id}${targetQuery}`, { method: "DELETE" });
         loadJobs();
     }
 }

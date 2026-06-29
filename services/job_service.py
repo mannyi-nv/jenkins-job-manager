@@ -1,21 +1,12 @@
 from data import load_jobs, save_jobs
 
-###############
-# Create Jobs #
-###############
 
-from data import load_jobs, save_jobs
-
-###############
-# Create Jobs #
-###############
-
-def create_job(job_name: str, owner: str, description: str, created_by: str = "admin", last_modify: str = "", schedule: str = "Manual"):
+def create_job(job_name: str, owner: str, description: str, created_by: str = "admin", last_modify: str = "", schedule: str = "Manual", filename: str = None):
     if not job_name or not owner:
         raise ValueError("job_name and owner are required")
 
     try:
-        jobs = load_jobs()
+        jobs = load_jobs(filename) if filename else load_jobs()
     except Exception:
         jobs = []
 
@@ -31,44 +22,34 @@ def create_job(job_name: str, owner: str, description: str, created_by: str = "a
     }
 
     jobs.append(new_job)
-    save_jobs(jobs)
+    save_jobs(jobs, filename) if filename else save_jobs(jobs)
 
     return new_job
 
-################
-# Display Jobs #
-################
 
-def get_all_jobs():
+def get_all_jobs(filename: str = None):
     try:
-        jobs = load_jobs()
+        jobs = load_jobs(filename) if filename else load_jobs()
     except Exception:
         jobs = []
 
     return jobs
 
-################
-# Delete Jobs  #
-################
 
-def delete_job(index: int):
-    jobs = load_jobs()
+def delete_job(index: int, filename: str = None):
+    jobs = load_jobs(filename) if filename else load_jobs()
 
     if index < 0 or index >= len(jobs):
         raise IndexError("Invalid job index")
 
     removed_job = jobs.pop(index)
-    save_jobs(jobs)
+    save_jobs(jobs, filename) if filename else save_jobs(jobs)
 
     return removed_job
 
 
-################
-# Update Jobs  #
-################
-
-def update_job(index: int, job_name: str = None, owner: str = None, description: str = None, created_by: str = None, last_modify: str = None, last_run: str = None, schedule: str = None):
-    jobs = load_jobs()
+def update_job(index: int, job_name: str = None, owner: str = None, description: str = None, created_by: str = None, last_modify: str = None, last_run: str = None, schedule: str = None, filename: str = None):
+    jobs = load_jobs(filename) if filename else load_jobs()
 
     if index < 0 or index >= len(jobs):
         raise IndexError("Invalid job index")
@@ -90,12 +71,12 @@ def update_job(index: int, job_name: str = None, owner: str = None, description:
         job["last_run"] = last_run
 
     # --- Safe Dropdown Mapping Update Fix ---
-    # This forces Python to accept the schedule value even if the original json row entry lacked the 'schedule' key!
     if schedule is not None and schedule.strip() != "":
         job["schedule"] = schedule
     elif "schedule" not in job:
-        job["schedule"] = "Manual" # Default fallback placeholder value
+        job["schedule"] = "Manual"
 
-    save_jobs(jobs)
+    save_jobs(jobs, filename) if filename else save_jobs(jobs)
     return job
+
 
