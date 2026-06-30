@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Query
+import shutil
+from pathlib import Path
 from services.job_service import get_all_jobs, create_job, delete_job, update_job, sync_jobs
 from fastapi.staticfiles import StaticFiles
 
@@ -9,6 +11,24 @@ TARGET_FILES = {
 }
 
 app = FastAPI()
+
+
+@app.on_event("startup")
+def copy_production_to_dev():
+    """Ensure `dummy_jobs.json` exists and is copied from `jobs.json` at startup.
+
+    This keeps the development view in sync with the repository production
+    data each time the app starts (useful when running in a VM/container).
+    """
+    try:
+        base = Path(__file__).parent
+        src = base / "jobs.json"
+        dest = base / "dummy_jobs.json"
+        if src.exists():
+            shutil.copyfile(src, dest)
+            print(f"Copied {src} -> {dest} on startup")
+    except Exception as e:
+        print(f"Warning: failed to copy jobs.json to dummy_jobs.json on startup: {e}")
 
 # 1. DEFINE API ROUTES FIRST
 @app.get("/jobs")
