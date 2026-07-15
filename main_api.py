@@ -5,9 +5,10 @@ from services.job_service import get_all_jobs, create_job, delete_job, update_jo
 from fastapi.staticfiles import StaticFiles
 
 # Map target keyword to filename used by data layer
+# Use absolute paths so they work regardless of working directory
 TARGET_FILES = {
-    "dev": "dummy_jobs.json",
-    "production": None  # None means use default path (production DEFAULT_PATH)
+    "dev": "/mnt/data/dummy_jobs.json",
+    "production": None  # None means use default path (production DEFAULT_PATH from data.py = /mnt/data/jobs.json)
 }
 
 app = FastAPI()
@@ -71,7 +72,7 @@ def edit_job(job_id: int, job: dict, target: str | None = Query(None, descriptio
 
 @app.post("/sync-dev-to-prod")
 def sync_dev_to_prod():
-    return sync_jobs(source_filename="dummy_jobs.json", target_filename=None)
+    return sync_jobs(source_filename="/mnt/data/dummy_jobs.json", target_filename=None)
 
 # 2. MOUNT STATIC FILES AT THE VERY BOTTOM
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
