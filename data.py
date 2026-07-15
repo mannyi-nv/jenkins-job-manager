@@ -2,7 +2,7 @@ import json
 import os
 
 # Enforce a strict absolute path to your production deployment directory
-DEFAULT_PATH = "/var/www/jenkins-job-manager/jobs.json"
+DEFAULT_PATH = "/mnt/data/jobs.json"
 FALLBACK_PATH = os.path.join(os.path.dirname(__file__), "jobs.json")
 
 
