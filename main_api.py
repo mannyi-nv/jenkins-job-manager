@@ -32,6 +32,13 @@ def copy_production_to_dev():
         print(f"Warning: failed to copy jobs.json to dummy_jobs.json on startup: {e}")
 
 # 1. DEFINE API ROUTES FIRST
+
+# /health endpoint is used by the health check in the docker-compose file to determine if the container is ready to accept requests
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 @app.get("/jobs")
 def get_jobs(target: str | None = Query(None, description="Choose 'dev' or 'production' to select storage")):
     filename = TARGET_FILES.get(target) if target else None
